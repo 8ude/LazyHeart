@@ -1,0 +1,162 @@
+<html>
+  <head>
+    <title>Three.js Example Template</title>
+  </head>
+  <body>
+    <!--
+      Template for creating synaesthetics
+      Load libraries from lib/ and load scene-specifics from js/
+      Stay positive, stay focused, make some cool stuff
+    -->
+    <script src="lib/three.js"></script>
+    <script src="lib/ShaderLoader.js"></script>
+    <script src="lib/AudioController.js"></script>
+    <script src="lib/Stream.js"></script>
+    <script src="lib/AudioTexture.js"></script>
+    <script src="lib/TrackballControls.js"></script>
+    <script src="lib/FirstPersonControls.js"></script>
+    
+    <!-- Main Script -->
+    <script>
+      // General three.js variables
+      var camera, controls, scene, renderer;
+      var cameraDummy;
+
+      renderer = new THREE.WebGLRenderer();
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.body.appendChild( renderer.domElement );
+      renderer.setClearColor( 0xaaccff );
+
+
+      window.addEventListener( 'resize', onWindowResize, false );
+
+      //time
+      var clock = new THREE.Clock();
+
+      // Scene-Specific Variables
+      var floor, floorGeometry, floorTexture, sunMesh, sunGeometry, sunTexture;
+      var floorSmoothing = 0.1;
+
+      // Ground Geo Vars
+      var worldWidth = 32, worldDepth = 32,
+      worldHalfWidth = worldWidth/2, worldHalfDepth = worldDepth/2;
+      
+
+      //Audio Vars
+      var audioController = new AudioController();
+      var stream = new Stream('Lazy.mp3', audioController );
+      // Object related variables
+      // Light-related variables, modify as needed
+
+      var light, light2;
+
+      // If you're using functions to encapsulate functionality do the following:
+      // 1. Include the functons between init() and animate()
+      // 2. Make damn sure that you don't redeclare variables inside the functions (don't use var twice)
+      //     as this will cause the code to fail
+
+      init();
+      animate();
+      function init() {
+        // Step 1 : Add Scene
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2( 0xaaccff, 0.0007 );
+
+        // Step 2 : Add Camera
+        camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera.up.set(0,1,0);
+        camera.position.y = 600;
+
+        scene.add( camera );
+        cameraDummy = new THREE.Object3D;
+        //cameraDummy.position.set(camera.position.x, camera.position.y, camera.position.z);
+        //scene.add( cameraDummy );
+        camera.add( cameraDummy );
+
+        // Step 2b : Controls
+        controls = new THREE.FirstPersonControls(camera);
+        controls.movementSpeed = 10;
+        controls.lookSpeed = 0.1;
+
+
+        // Step 3 : Add stuff
+        floorMaterial = new THREE.MeshPhongMaterial( {shading : THREE.FlatShading} );
+        floorGeometry = new THREE.PlaneGeometry(10000, 10000, worldWidth, worldDepth);
+        //rotate floor 
+
+       
+        floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.position.y -= 800;
+        floor.rotateOnAxis(new THREE.Vector3(1,0,0), - Math.PI / 2 );
+
+
+        scene.add(floor);
+        // If you will not use functions to create objects then put the objects below
+        sunGeometry = new THREE.SphereGeometry(0, 5, 0);
+        sunMaterial = new THREE.MeshPhongMaterial ({
+          color: 0x0000ff,
+          wireframe: false
+        });
+        sunMesh = new THREE.Mesh( sunGeometry, sunMaterial);
+        
+        
+        //scene.add( sunMesh );
+        cameraDummy.add(sunMesh);
+        sunMesh.position.set(0, 100, 500);
+        //console.log(sunMesh.position);
+
+        
+        // If you will not use functions to create the light sources, then put them below
+        light = new THREE.PointLight( 0xffffff);
+        light.position.set( 0,20,20 );
+
+        light2 = new THREE.PointLight( 0xff00ff );
+        light2.position.set( 0, 200, 50 );
+
+        light3 = new THREE.AmbientLight( 0x404040 );
+        light3.position.set(camera.position )
+        scene.add(light);
+        scene.add(light2);
+        //scene.add(light3);
+        //stream.play();
+
+        }
+      
+
+      function animate() {
+        // requestAnimationFrame shim is included in Three.js, no need to create your own
+        // animate() can also handle specific animation steps or they can be handled to an external function
+        var delta = clock.getDelta();
+        controls.update(delta);
+
+        audioController.update();
+
+        for (var i = 0; i < audioController.analyzer.array.length; i++) {
+          floorGeometry.vertices[i].z += (audioController.analyzer.array[i]*10-floorGeometry.vertices[i].z)*floorSmoothing;
+        }
+
+        floor.geometry.verticesNeedUpdate = true;
+        //cameraDummy.rotation.y += 0.01;
+        //cameraDummy.rotation.y += 0.1;
+
+
+        requestAnimationFrame( animate );
+        render();
+        console.log(sunMesh.position);
+      }
+
+      function render () {
+        //in case things get more complicated;
+        renderer.render(scene, camera);
+      }
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+      }
+    </script>
+  </body>
+</html>
