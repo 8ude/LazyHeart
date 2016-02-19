@@ -86,9 +86,9 @@
 
         scene.add( camera );
         cameraDummy = new THREE.Object3D;
-        //cameraDummy.position.set(camera.position.x, camera.position.y, camera.position.z);
+        cameraDummy.position.set(camera.position.x, camera.position.y, camera.position.z);
 
-        camera.add( cameraDummy );
+        scene.add( cameraDummy );
 
         // Step 2b : Controls
         controls = new THREE.FirstPersonControls(camera);
@@ -104,7 +104,7 @@
         floor.rotateOnAxis(new THREE.Vector3(1,0,0), - Math.PI / 2 );
         scene.add(floor);
 
-        sunGeometry = new THREE.SphereGeometry(50, 32, 32);
+        sunGeometry = new THREE.SphereGeometry(100, 32, 32);
         sunMaterial = new THREE.MeshPhongMaterial ({
           color: 0xffff00,
           emissive: 0xffde00,
@@ -113,7 +113,7 @@
         });
         sunMesh = new THREE.Mesh( sunGeometry, sunMaterial);
 
-        coronaGeometry = new THREE.IcosahedronGeometry(100, 1);
+        coronaGeometry = new THREE.IcosahedronGeometry(200, 1);
         coronaMaterial = new THREE.MeshPhongMaterial ({
           color: 0xffff00,
           emissive: 0xffde00,
@@ -126,10 +126,13 @@
         numSprites = 50;
         var textureLoader = new THREE.TextureLoader();
         var map1 = textureLoader.load("Texture2.png");
-        spriteA = new TextureAnimator( map1, 6, 1, 6, 75 ); // texture, #horiz, #vert, #total, duration.
+        // for Lazy Heart - duration = 468/num frames
+        spriteA = new TextureAnimator( map1, 6, 1, 6, 78 ); // texture, #horiz, #vert, #total, duration.
         var gifMat1 = new THREE.SpriteMaterial( { map: map1, color: 0xffffff, fog: true } );
 
         for (var i = 0; i < numSprites; i++) {
+
+
 
           
           
@@ -148,7 +151,7 @@
 
         //scene.add( sunMesh );
         cameraDummy.add(sunMesh);
-        sunMesh.position.set(0, 100, -500);
+        sunMesh.position.set(0, 600, -1000);
         //console.log(sunMesh.position);
 
         
@@ -202,8 +205,9 @@
           floorGeometry.vertices[i].z += (audioController.analyzer.array[i]*10-floorGeometry.vertices[i].z)*floorSmoothing;
         }
 
-        for (var i = 0; i < coronaGeometry.vertices.length; i++) {
+        for (var i = 0; i < coronaGeometry.vertices.length/2; i++) {
           coronaGeometry.vertices[i].z += (audioController.analyzer.array[i]-coronaGeometry.vertices[i].z)*floorSmoothing;
+          coronaGeometry.vertices[i + coronaGeometry.vertices.length/2].z += (audioController.analyzer.array[i]-coronaGeometry.vertices[i].z)*floorSmoothing;
         }
 
 
@@ -222,8 +226,8 @@
         //composer.render();
         render();
         
-        //console.log(sunMesh.position);
-
+        console.log(camera.rotation.y);
+        cameraDummy.rotation.y = camera.rotation.y;
       }
 
       function render () {
