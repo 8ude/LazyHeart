@@ -18,6 +18,8 @@
     <script src="lib/AudioTexture.js"></script>
     <script src="lib/TrackballControls.js"></script>
     <script src="lib/FirstPersonControls.js"></script>
+    <script src="lib/ObjectControls.js"></script>
+
 
     <script src="lib/shaders/CopyShader.js"></script>
     <script src="lib/shaders/DotScreenShader.js"></script>
@@ -30,8 +32,15 @@
     
     <!-- Main Script -->
     <script>
+      //COLOR PALETTE:
+      //LIGHT BLUE: 54,196,216 #36C4D8
+      //RED: 214,51,52 #D63334
+      //YELLOW: 243,215,71 #F3D847
+      //LAVENDER: 177,111,173 #B16FAD
+      //
+
       // General three.js variables
-      var camera, controls, scene, renderer
+      var camera, controls, scene, renderer;
       // If using post-processor - send scene to EffectComposer
       var composer;
       var cameraDummy;
@@ -54,6 +63,8 @@
 
       var spriteA, numSprites;
       var superSprite = [];
+      var superCollider = [];
+      var map1, map2, gifMat1, gifMat2;
 
       var floorSmoothing = 0.1;
 
@@ -69,6 +80,9 @@
       // Light-related variables, modify as needed
 
       var light, light2;
+
+      //Raycaster
+      var raycaster, mouse, INTERSECTED;
 
       // If you're using functions to encapsulate functionality do the following:
       // 1. Include the functons between init() and animate()
@@ -98,6 +112,13 @@
         controls.movementSpeed = 10;
         controls.lookSpeed = 0.1;
 
+        // Step 2c : Raycaster and Mouse
+        raycaster = new THREE.Raycaster();
+        mouse = new THREE.Vector2();
+        mouse.x = controls.mouseX;
+        mouse.y = controls.mouseY;
+       
+
 
         // Step 3 : Add stuff
         floorMaterial = new THREE.MeshPhongMaterial( {shading : THREE.FlatShading} );
@@ -109,7 +130,7 @@
 
         sunGeometry = new THREE.SphereGeometry(100, 32, 32);
         sunMaterial = new THREE.MeshPhongMaterial ({
-          color: 0xffff00,
+          color: 0xF3D847,
           emissive: 0xffde00,
           specular: 0xffffff,
           wireframe: false
@@ -118,7 +139,7 @@
 
         coronaGeometry = new THREE.IcosahedronGeometry(200, 1);
         coronaMaterial = new THREE.MeshPhongMaterial ({
-          color: 0xffff00,
+          color: 0xF3D847,
           emissive: 0xffde00,
           specular: 0xffffff,
           wireframe: true
@@ -128,26 +149,42 @@
         
         numSprites = 50;
         var textureLoader = new THREE.TextureLoader();
-        var map1 = textureLoader.load("Texture2.png");
+        map1 = textureLoader.load("Texture2.png");
+        map2 = textureLoader.load("HoverTexture.png");
         // for Lazy Heart - duration = 468/num frames
         spriteA = new TextureAnimator( map1, 6, 1, 6, 78 ); // texture, #horiz, #vert, #total, duration.
-        var gifMat1 = new THREE.SpriteMaterial( { map: map1, color: 0xffffff, fog: true } );
+        gifMat1 = new THREE.SpriteMaterial( { map: map1, color: 0xffffff, fog: true } );
+        hoverSprite = new TextureAnimator( map2, 6, 1, 6, 78 ); // texture, #horiz, #vert, #total, duration.
+        gifMat2 = new THREE.SpriteMaterial( { map: map2, color: 0xffffff, fog: true } );
 
+        var colGeometry = new THREE.PlaneGeometry( 2, 2, 32 );
+        var colMaterial = new THREE.MeshBasicMaterial( {color: 0xff0000, side: THREE.DoubleSide, visible: true} );
         for (var i = 0; i < numSprites; i++) {
 
-
-
-          
-          
           superSprite[i] = new THREE.Sprite(gifMat1);
           
-          superSprite[i].position.x = (camera.position.x + Math.random()*50 - 50);
-          superSprite[i].position.y = (camera.position.y + Math.random()*50);
-          superSprite[i].position.z = (camera.position.z + Math.random()*50 - 50);
+          superSprite[i].position.x = (camera.position.x + Math.random()*25 - 25);
+          superSprite[i].position.y = (camera.position.y + Math.random()*25 - 25);
+          superSprite[i].position.z = (camera.position.z + Math.random()*25 - 25);
+
+
+
+          
+          superCollider[i] = new THREE.Mesh( colGeometry, colMaterial );
+          superCollider[i].position.x = superSprite[i].position.x;
+          superCollider[i].position.y = superSprite[i].position.y;
+          superCollider[i].position.z = superSprite[i].position.z;
+          superCollider[i].rotation = camera.rotation;
+
+          scene.add(superCollider[i]);
 
           scene.add(superSprite[i]);
+          superSprite[i].add(superCollider[i]);
 
         }
+
+        //objControls.add(superCollider);
+        
 
         
   
@@ -200,7 +237,11 @@
         var delta = clock.getDelta();
         controls.update(delta);
 
+        mouse.x = controls.mouseX;
+        mouse.y = controls.mouseY;
+
         spriteA.update(delta * 1000);
+        hoverSprite.update(delta * 1000);
 
         audioController.update();
 
@@ -221,6 +262,10 @@
         //cameraDummy.rotation.y += 0.01;
         //cameraDummy.rotation.y += 0.1;
 
+        for (var i = 0; i < numSprites; i++) {
+          superSprite[i].lookAt(camera.position);
+        }
+
 
         requestAnimationFrame( animate );
         
@@ -229,13 +274,39 @@
         //composer.render();
         render();
         
-        console.log(camera.rotation.y);
+ 
         cameraDummy.rotation.y = camera.rotation.y;
       }
 
       function render () {
-        //in case things get more complicated;
-        renderer.render(scene, camera);
+        //in case things get more complicated
+
+        raycaster.setFromCamera( mouse, camera );
+
+        var intersects = raycaster.intersectObjects( superSprite );
+        if ( intersects.length > 0 ) {
+          if ( INTERSECTED != intersects[ 0 ].object ) {
+            if ( INTERSECTED ) INTERSECTED.material = INTERSECTED.currentMap;
+            INTERSECTED = intersects[ 0 ].object;
+            INTERSECTED.currentMap = INTERSECTED.material;
+            INTERSECTED.material = gifMat2;
+          }
+        } else {
+          if ( INTERSECTED ) INTERSECTED.material = INTERSECTED.currentMap;
+          INTERSECTED = null;
+        }
+        
+        /* var intersects = raycaster.intersectObjects( superCollider );
+
+        for ( var i = 0; i < intersects.length; i++ ) {
+
+          intersects[ i ].object.material.color.set( 0x000000 );
+          
+          console.log("intersect");
+        
+        } 
+        */
+        renderer.render(scene, camera); 
       }
 
       function onWindowResize() {
@@ -247,6 +318,7 @@
 
       }
 
+      
       
 
       function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) { 
