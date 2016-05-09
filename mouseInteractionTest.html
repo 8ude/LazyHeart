@@ -52,6 +52,7 @@
 
 
       window.addEventListener( 'resize', onWindowResize, false );
+      document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 
       //time
       var clock = new THREE.Clock();
@@ -83,6 +84,7 @@
 
       //Raycaster
       var raycaster, mouse, INTERSECTED;
+      var sceneSprites;
 
       // If you're using functions to encapsulate functionality do the following:
       // 1. Include the functons between init() and animate()
@@ -108,15 +110,15 @@
         scene.add( cameraDummy );
 
         // Step 2b : Controls
-        controls = new THREE.FirstPersonControls(camera);
-        controls.movementSpeed = 10;
-        controls.lookSpeed = 0.1;
+       // controls = new THREE.FirstPersonControls(camera);
+        //controls.movementSpeed = 10;
+       // controls.lookSpeed = 0.1;
 
         // Step 2c : Raycaster and Mouse
         raycaster = new THREE.Raycaster();
         mouse = new THREE.Vector2();
-        mouse.x = controls.mouseX;
-        mouse.y = controls.mouseY;
+        // mouse.x = controls.mouseX;
+        // mouse.y = controls.mouseY;
        
 
 
@@ -159,26 +161,31 @@
 
         var colGeometry = new THREE.PlaneGeometry( 2, 2, 32 );
         var colMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, visible: false} );
+        sceneSprites = new THREE.Object3D;
         for (var i = 0; i < numSprites; i++) {
 
-          superSprite[i] = new THREE.Sprite(gifMat1);
+          var gifMat = new THREE.SpriteMaterial( { map: map1, color: 0xffffff, fog: true } );
+
+          var superSprite= new THREE.Sprite(gifMat);
           
-          superSprite[i].position.x = (camera.position.x + Math.random()*25 - 25);
-          superSprite[i].position.y = (camera.position.y + Math.random()*25 - 25);
-          superSprite[i].position.z = (camera.position.z + Math.random()*25 - 25);
+          superSprite.position.x = (camera.position.x + Math.random()*25 - 25);
+          superSprite.position.y = (camera.position.y + Math.random()*25 - 25);
+          superSprite.position.z = (camera.position.z + Math.random()*25 - 25);
 
 
 
           
           superCollider[i] = new THREE.Mesh( colGeometry, colMaterial );
           
-
+          sceneSprites.add(superSprite);
           scene.add(superCollider[i]);
 
-          scene.add(superSprite[i]);
-          superSprite[i].add(superCollider[i]);
+          
+          superSprite.add(superCollider[i]);
 
         }
+
+        scene.add(sceneSprites)
 
         //objControls.add(superCollider);
         
@@ -232,10 +239,8 @@
         // requestAnimationFrame shim is included in Three.js, no need to create your own
         // animate() can also handle specific animation steps or they can be handled to an external function
         var delta = clock.getDelta();
-        controls.update(delta);
+        //controls.update(delta);
 
-        mouse.x = controls.mouseX;
-        mouse.y = controls.mouseY;
 
         spriteA.update(delta * 1000);
         hoverSprite.update(delta * 1000);
@@ -260,7 +265,7 @@
         //cameraDummy.rotation.y += 0.1;
 
         for (var i = 0; i < numSprites; i++) {
-          superSprite[i].lookAt(camera.position);
+          sceneSprites.children[i].lookAt(camera.position);
         }
 
 
@@ -282,43 +287,21 @@
 
       // create a Ray with origin at the mouse position
       //   and direction into the scene (camera direction)
-      var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
       
-      var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
-
-      // create an array containing all objects in the scene with which the ray intersects
-      var intersects = ray.intersectObjects( scene.children );
-
-      // INTERSECTED = the object in the scene currently closest to the camera 
-      //    and intersected by the Ray projected from the mouse position  
-      
-      // if there is one (or more) intersections
-      if ( intersects.length > 0 )
-      {
-        // if the closest object intersected is not the currently stored intersection object
-        if ( intersects[ 0 ].object != INTERSECTED ) 
-        {
-            // restore previous intersection object (if it exists) to its original color
-          if ( INTERSECTED ) 
-            INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
-          // store reference to closest object as current intersection object
-          INTERSECTED = intersects[ 0 ].object;
-          // store color of closest object (for later restoration)
-          INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
-          // set a new color for closest object
-          INTERSECTED.material.color.setHex( 0xffff00 );
-          
+     raycaster.setFromCamera( mouse, camera );
+        var intersects = raycaster.intersectObjects( sceneSprites.children );
+        if ( intersects.length > 0 ) {
+          if ( INTERSECTED != intersects[ 0 ].object ) {
+            if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+            INTERSECTED = intersects[ 0 ].object;
+            INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+            INTERSECTED.material.color.setHex( 0xff0000 );
+          }
+        } else {
+          if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+          INTERSECTED = null;
         }
-      } 
-      else // there are no intersections
-      {
-        // restore previous intersection object (if it exists) to its original color
-        if ( INTERSECTED ) 
-          INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
-        // remove previous intersection object reference
-        //     by setting current intersection object to "nothing"
-        INTERSECTED = null;
-      }
+
         
         //  var intersects = raycaster.intersectObjects( superCollider );
 
@@ -340,6 +323,12 @@
         renderer.setSize( window.innerWidth, window.innerHeight );
         //composer.setSize( window.innerWidth, window.innerHeight );
 
+      }
+
+      function onDocumentMouseMove( event ) {
+        event.preventDefault();
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
       }
 
       
