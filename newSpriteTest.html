@@ -19,6 +19,7 @@
     <script src="lib/TrackballControls.js"></script>
     <script src="lib/FirstPersonControls.js"></script>
     <script src="lib/ObjectControls.js"></script>
+    <script src="lib/HeartSprite.js"></script>
 
 
     <script src="lib/shaders/CopyShader.js"></script>
@@ -154,33 +155,34 @@
         numSprites = 50;
         var textureLoader = new THREE.TextureLoader();
         map1 = textureLoader.load("Texture2.png");
-        map2 = textureLoader.load("HoverTexture.png");
-        // for Lazy Heart - duration = 468/num frames
-        spriteA = new TextureAnimator( map1, 8, 1, 8, 78 ); // texture, #horiz, #vert, #total, duration.
-        gifMat1 = new THREE.SpriteMaterial( { map: map1, color: 0xffffff, fog: true } );
-        hoverSprite = new TextureAnimator( map2, 6, 1, 6, 78 ); // texture, #horiz, #vert, #total, duration.
-        gifMat2 = new THREE.SpriteMaterial( { map: map2, color: 0xffffff, fog: true } );
+        // map2 = textureLoader.load("HoverTexture.png");
+        // // for Lazy Heart - duration = 468/num frames
+        // spriteA = new TextureAnimator( map1, 8, 1, 8, 78 ); // texture, #horiz, #vert, #total, duration.
+        // gifMat1 = new THREE.SpriteMaterial( { map: map1, color: 0xffffff, fog: true } );
+        // hoverSprite = new TextureAnimator( map2, 6, 1, 6, 78 ); // texture, #horiz, #vert, #total, duration.
+        // gifMat2 = new THREE.SpriteMaterial( { map: map2, color: 0xffffff, fog: true } );
 
         var colGeometry = new THREE.PlaneGeometry( 2, 2, 32 );
         var colMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, visible: false} );
         sceneSprites = new THREE.Object3D;
         for (var i = 0; i < numSprites; i++) {
 
-          var gifMat = new THREE.SpriteMaterial( { map: map1, color: 0xffffff, fog: true } );
-
-          var superSprite= new THREE.Sprite(gifMat);
           
-          superSprite.position.x = (camera.position.x + Math.random()*25 - 25);
-          superSprite.position.y = (camera.position.y + Math.random()*25 - 25);
-          superSprite.position.z = (camera.position.z + Math.random()*25 - 25);
+          var position = new THREE.Vector3();
+          position.x = (camera.position.x + Math.random()*25 - 50);
+          position.y = (camera.position.y + Math.random()*25 - 50);
+          position.z = (camera.position.z + Math.random()*25 - 50);
 
+          var type = Math.floor(Math.random()*6);
 
+          superSprite = new HeartSprite(position, type);
+          superSprite.init();
 
           
           superCollider[i] = new THREE.Mesh( colGeometry, colMaterial );
-          superSprite.add(superCollider[i]);
+          superSprite.sprite.add(superCollider[i]);
 
-          sceneSprites.add(superSprite);
+          sceneSprites.add(superSprite.sprite);
 
 
         }
@@ -240,10 +242,10 @@
         // animate() can also handle specific animation steps or they can be handled to an external function
         var delta = clock.getDelta();
         //controls.update(delta);
+        for (var i = 0; i < numSprites; i ++) {
+          sceneSprites.children[i].myParent.update(delta);
+        }
 
-
-        spriteA.update(delta * 1000);
-        hoverSprite.update(delta * 1000);
 
         audioController.update();
 
@@ -265,7 +267,7 @@
         //cameraDummy.rotation.y += 0.1;
 
         for (var i = 0; i < numSprites; i++) {
-          sceneSprites.children[i].lookAt(camera.position);
+          superCollider[i].lookAt(camera.position);
         }
 
 
@@ -291,15 +293,16 @@
         raycaster.setFromCamera( mouse, camera );
         var intersects = raycaster.intersectObjects( superCollider );
         if ( intersects.length > 0 ) {
-          if ( INTERSECTED != intersects[ 0 ].object.parent && SELECTED == null) {
-            if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
-            INTERSECTED = intersects[ 0 ].object.parent;
+          if ( INTERSECTED != intersects[ 0 ].object.parent.myParent && SELECTED == null) {
+            INTERSECTED = intersects[ 0 ].object.parent.myParent;
+            INTERSECTED.HOVER = true;
 
-            INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
-            INTERSECTED.material.color.setHex( 0xff0000 );
+            //INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+            //INTERSECTED.material.color.setHex( 0xff0000 );
           }
         } else {
-          if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+          
+          //INTERSECTED.HOVER = false;
           INTERSECTED = null;
         }
 
@@ -339,54 +342,55 @@
         var intersects = raycaster.intersectObjects( superCollider );
         if ( intersects.length > 0 ) {
           //controls.enabled = false;
-          SELECTED = intersects[ 0 ].object.parent;
-          SELECTED.material.color.setHex(0x0000ff);
+          SELECTED = intersects[ 0 ].object.parent.myParent;
+          SELECTED.CLICKED = true
+
         }
       }
 
       function onDocumentMouseUp(event) {
-        SELECTED.material.color.setHex(0xffffff);
+        SELECTED.CLICKED = false;
         SELECTED = null;
       }
 
       
       
 
-      function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) { 
-        // note: texture passed by reference, will be updated by the update function.
+      // function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) { 
+      //   // note: texture passed by reference, will be updated by the update function.
           
-        this.tilesHorizontal = tilesHoriz;
-        this.tilesVertical = tilesVert;
-        // how many images does this spritesheet contain?
-        //  usually equals tilesHoriz * tilesVert, but not necessarily,
-        //  if there at blank tiles at the bottom of the spritesheet. 
-        this.numberOfTiles = numTiles;
-        texture.wrapS = texture.wrapT = THREE.RepeatWrapping; 
-        texture.repeat.set( 1 / this.tilesHorizontal, 1 / this.tilesVertical );
+      //   this.tilesHorizontal = tilesHoriz;
+      //   this.tilesVertical = tilesVert;
+      //   // how many images does this spritesheet contain?
+      //   //  usually equals tilesHoriz * tilesVert, but not necessarily,
+      //   //  if there at blank tiles at the bottom of the spritesheet. 
+      //   this.numberOfTiles = numTiles;
+      //   texture.wrapS = texture.wrapT = THREE.RepeatWrapping; 
+      //   texture.repeat.set( 1 / this.tilesHorizontal, 1 / this.tilesVertical );
 
-        // how long should each image be displayed?
-        this.tileDisplayDuration = tileDispDuration;
+      //   // how long should each image be displayed?
+      //   this.tileDisplayDuration = tileDispDuration;
 
-        // how long has the current image been displayed?
-        this.currentDisplayTime = 0;
+      //   // how long has the current image been displayed?
+      //   this.currentDisplayTime = 0;
 
-        // which image is currently being displayed?
-        this.currentTile = 0;
+      //   // which image is currently being displayed?
+      //   this.currentTile = 0;
           
-        this.update = function( milliSec ) {
-          this.currentDisplayTime += milliSec;
-          while (this.currentDisplayTime > this.tileDisplayDuration) {
-            this.currentDisplayTime -= this.tileDisplayDuration;
-            this.currentTile++;
-            if (this.currentTile == this.numberOfTiles)
-              this.currentTile = 0;
-            var currentColumn = this.currentTile % this.tilesHorizontal;
-            texture.offset.x = currentColumn / this.tilesHorizontal;
-            var currentRow = Math.floor( this.currentTile / this.tilesHorizontal );
-            texture.offset.y = currentRow / this.tilesVertical;
-          }
-        };
-      }  
+      //   this.update = function( milliSec ) {
+      //     this.currentDisplayTime += milliSec;
+      //     while (this.currentDisplayTime > this.tileDisplayDuration) {
+      //       this.currentDisplayTime -= this.tileDisplayDuration;
+      //       this.currentTile++;
+      //       if (this.currentTile == this.numberOfTiles)
+      //         this.currentTile = 0;
+      //       var currentColumn = this.currentTile % this.tilesHorizontal;
+      //       texture.offset.x = currentColumn / this.tilesHorizontal;
+      //       var currentRow = Math.floor( this.currentTile / this.tilesHorizontal );
+      //       texture.offset.y = currentRow / this.tilesVertical;
+      //     }
+      //   };
+      // }  
     </script>
   </body>
 </html>
