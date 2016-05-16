@@ -53,6 +53,8 @@
 
       window.addEventListener( 'resize', onWindowResize, false );
       document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+      document.addEventListener( 'mousedown', onDocumentMouseDown, false);
+      document.addEventListener( 'mouseup', onDocumentMouseUp, false);
 
       //time
       var clock = new THREE.Clock();
@@ -83,7 +85,7 @@
       var light, light2;
 
       //Raycaster
-      var raycaster, mouse, INTERSECTED;
+      var raycaster, mouse, INTERSECTED, SELECTED;
       var sceneSprites;
 
       // If you're using functions to encapsulate functionality do the following:
@@ -176,12 +178,10 @@
 
           
           superCollider[i] = new THREE.Mesh( colGeometry, colMaterial );
-          
-          sceneSprites.add(superSprite);
-          scene.add(superCollider[i]);
-
-          
           superSprite.add(superCollider[i]);
+
+          sceneSprites.add(superSprite);
+
 
         }
 
@@ -288,12 +288,13 @@
       // create a Ray with origin at the mouse position
       //   and direction into the scene (camera direction)
       
-     raycaster.setFromCamera( mouse, camera );
-        var intersects = raycaster.intersectObjects( sceneSprites.children );
+        raycaster.setFromCamera( mouse, camera );
+        var intersects = raycaster.intersectObjects( superCollider );
         if ( intersects.length > 0 ) {
-          if ( INTERSECTED != intersects[ 0 ].object ) {
+          if ( INTERSECTED != intersects[ 0 ].object.parent && SELECTED == null) {
             if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
-            INTERSECTED = intersects[ 0 ].object;
+            INTERSECTED = intersects[ 0 ].object.parent;
+
             INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
             INTERSECTED.material.color.setHex( 0xff0000 );
           }
@@ -329,6 +330,23 @@
         event.preventDefault();
         mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
         mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+      }
+
+      function onDocumentMouseDown(event) {
+
+        event.preventDefault();
+        raycaster.setFromCamera( mouse, camera );
+        var intersects = raycaster.intersectObjects( superCollider );
+        if ( intersects.length > 0 ) {
+          //controls.enabled = false;
+          SELECTED = intersects[ 0 ].object.parent;
+          SELECTED.material.color.setHex(0x0000ff);
+        }
+      }
+
+      function onDocumentMouseUp(event) {
+        SELECTED.material.color.setHex(0xffffff);
+        SELECTED = null;
       }
 
       
