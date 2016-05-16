@@ -112,15 +112,11 @@
         scene.add( cameraDummy );
 
         // Step 2b : Controls
-       // controls = new THREE.FirstPersonControls(camera);
-        //controls.movementSpeed = 10;
-       // controls.lookSpeed = 0.1;
+      
 
         // Step 2c : Raycaster and Mouse
         raycaster = new THREE.Raycaster();
         mouse = new THREE.Vector2();
-        // mouse.x = controls.mouseX;
-        // mouse.y = controls.mouseY;
        
 
 
@@ -132,6 +128,9 @@
         floor.rotateOnAxis(new THREE.Vector3(1,0,0), - Math.PI / 2 );
         scene.add(floor);
 
+
+
+        //TODO: interaction with sun and landscape
         sunGeometry = new THREE.SphereGeometry(100, 32, 32);
         sunMaterial = new THREE.MeshPhongMaterial ({
           color: 0xF3D847,
