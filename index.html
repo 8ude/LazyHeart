@@ -187,16 +187,15 @@
 
         scene.add(sceneSprites)
 
-        //objControls.add(superCollider);
+
         
 
         
   
 
-        //scene.add( sunMesh );
         cameraDummy.add(sunMesh);
         sunMesh.position.set(0, 600, -1000);
-        //console.log(sunMesh.position);
+
 
         
         // If you will not use functions to create the light sources, then put them below
@@ -261,8 +260,7 @@
         coronaMesh.geometry.verticesNeedUpdate = true;
         floor.geometry.verticesNeedUpdate = true;
 
-        //cameraDummy.rotation.y += 0.01;
-        //cameraDummy.rotation.y += 0.1;
+
 
         for (var i = 0; i < numSprites; i++) {
           sceneSprites.children[i].lookAt(camera.position);
@@ -288,6 +286,10 @@
       // create a Ray with origin at the mouse position
       //   and direction into the scene (camera direction)
       
+
+      /////////This raycasting method is THE WORST//////////// 
+      /////and I can't figure out a better way to do it///////
+
         raycaster.setFromCamera( mouse, camera );
         var intersects = raycaster.intersectObjects( superCollider );
         if ( intersects.length > 0 ) {
@@ -304,15 +306,7 @@
         }
 
         
-        //  var intersects = raycaster.intersectObjects( superCollider );
 
-        // for ( var i = 0; i < intersects.length; i++ ) {
-
-        //   intersects[ i ].object.material.color.set( 0x000000 );
-          
-        //   console.log("intersect");
-        
-        // } 
         
         renderer.render(scene, camera); 
       }
