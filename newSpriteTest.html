@@ -163,34 +163,38 @@
         // gifMat2 = new THREE.SpriteMaterial( { map: map2, color: 0xffffff, fog: true } );
 
         var colGeometry = new THREE.PlaneGeometry( 2, 2, 32 );
-        var colMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, visible: false} );
-        sceneSprites = new THREE.Object3D;
+        var colMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, visible: true} );
+        sceneSprites = [];
         for (var i = 0; i < numSprites; i++) {
 
           
           var position = new THREE.Vector3();
-          position.x = (camera.position.x + Math.random()*25 - 50);
-          position.y = (camera.position.y + Math.random()*25 - 50);
-          position.z = (camera.position.z + Math.random()*25 - 50);
+          position.x = (camera.position.x + Math.random()*50 - 25);
+          position.y = (camera.position.y + Math.random()*50 - 25);
+          position.z = (camera.position.z + Math.random()*50 - 100);
 
           var type = Math.floor(Math.random()*6);
 
-          superSprite = new HeartSprite(position, type);
+          var superSprite = new HeartSprite(position, type);
+          sceneSprites[i] = superSprite;
           superSprite.init();
 
           
           superCollider[i] = new THREE.Mesh( colGeometry, colMaterial );
+          //superCollider[i].rotation.y = Math.PI/2;
+
           superSprite.sprite.add(superCollider[i]);
 
-          sceneSprites.add(superSprite.sprite);
 
+          scene.add(superSprite.sprite);
+          console.log(superSprite.sprite.scale.x);
 
         }
 
-        scene.add(sceneSprites)
+        
 
         //objControls.add(superCollider);
-        
+
 
         
   
@@ -243,7 +247,15 @@
         var delta = clock.getDelta();
         //controls.update(delta);
         for (var i = 0; i < numSprites; i ++) {
-          sceneSprites.children[i].myParent.update(delta);
+          sceneSprites[i].update(delta);
+        }
+
+        if (mouse.x >= 0.8) {
+          camera.rotation.y += 0.001;
+        }
+
+        if (mouse.x <= -0.8) {
+          camera.rotation.y -= 0.001;
         }
 
 
@@ -267,7 +279,7 @@
         //cameraDummy.rotation.y += 0.1;
 
         for (var i = 0; i < numSprites; i++) {
-          superCollider[i].lookAt(camera.position);
+          //superCollider[i].lookAt(camera.position);
         }
 
 
@@ -301,7 +313,7 @@
             //INTERSECTED.material.color.setHex( 0xff0000 );
           }
         } else {
-          
+          if (INTERSECTED != null) { INTERSECTED.HOVER = false }
           //INTERSECTED.HOVER = false;
           INTERSECTED = null;
         }
@@ -332,6 +344,8 @@
       function onDocumentMouseMove( event ) {
         event.preventDefault();
         mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        console.log(mouse.x);
+        
         mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
       }
 
