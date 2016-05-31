@@ -62,7 +62,7 @@
 
       // Scene-Specific Variables
       var floor, floorGeometry, floorTexture, 
-      sunMesh, sunGeometry, sunTexture,
+      sunMesh, sunGeometry, sunTexture, sunChanging,
       coronaMesh, coronaGeometry, coronaTexture;
 
       var spriteA, numSprites;
@@ -133,6 +133,8 @@
         floor.rotateOnAxis(new THREE.Vector3(1,0,0), - Math.PI / 2 );
         scene.add(floor);
 
+        // Here comes the sun little darling //
+        sunChanging = false
         sunGeometry = new THREE.SphereGeometry(100, 32, 32);
         sunMaterial = new THREE.MeshPhongMaterial ({
           color: 0xF3D847,
@@ -163,7 +165,7 @@
         // gifMat2 = new THREE.SpriteMaterial( { map: map2, color: 0xffffff, fog: true } );
 
         var colGeometry = new THREE.PlaneGeometry( 2, 2, 32 );
-        var colMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, visible: true} );
+        var colMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, visible: false} );
         sceneSprites = [];
         for (var i = 0; i < numSprites; i++) {
 
@@ -171,11 +173,14 @@
           var position = new THREE.Vector3();
           position.x = (camera.position.x + Math.random()*50 - 25);
           position.y = (camera.position.y + Math.random()*50 - 25);
-          position.z = (camera.position.z + Math.random()*50 - 100);
+          position.z = (camera.position.z + Math.random()*50 - 50);
 
           var type = Math.floor(Math.random()*6);
 
           var superSprite = new HeartSprite(position, type);
+          var affectSun = Math.round(Math.random()) == 1 ? true : false;
+          superSprite.changeSun = affectSun;
+
           sceneSprites[i] = superSprite;
           superSprite.init();
 
@@ -258,6 +263,7 @@
           camera.rotation.y -= 0.001;
         }
 
+        /// A u d i o R e a c t i v i t y ///
 
         audioController.update();
 
@@ -270,10 +276,15 @@
           coronaGeometry.vertices[i + coronaGeometry.vertices.length/2].z += (audioController.analyzer.array[i]-coronaGeometry.vertices[i].z)*floorSmoothing;
         }
 
-
-
         coronaMesh.geometry.verticesNeedUpdate = true;
         floor.geometry.verticesNeedUpdate = true;
+        //
+
+        // sun sun sun changing //
+        if (sunChanging) {
+          changeSunColor();
+          sunChanging = false;
+        }
 
         //cameraDummy.rotation.y += 0.01;
         //cameraDummy.rotation.y += 0.1;
@@ -281,6 +292,7 @@
         for (var i = 0; i < numSprites; i++) {
           //superCollider[i].lookAt(camera.position);
         }
+
 
 
         requestAnimationFrame( animate );
@@ -344,7 +356,7 @@
       function onDocumentMouseMove( event ) {
         event.preventDefault();
         mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-        console.log(mouse.x);
+        
         
         mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
       }
@@ -358,6 +370,10 @@
           //controls.enabled = false;
           SELECTED = intersects[ 0 ].object.parent.myParent;
           SELECTED.CLICKED = true
+          if (SELECTED.changeSun) {
+            sunChanging = true;
+          }
+
 
         }
       }
@@ -365,6 +381,16 @@
       function onDocumentMouseUp(event) {
         SELECTED.CLICKED = false;
         SELECTED = null;
+      }
+
+      function changeSunColor() {
+        
+        
+        sunMesh.material.emissive.r = Math.random();
+        sunMesh.material.emissive.g = Math.random();
+ 
+
+
       }
 
       
