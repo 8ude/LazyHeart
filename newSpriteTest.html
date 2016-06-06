@@ -18,18 +18,13 @@
     <script src="lib/AudioTexture.js"></script>
     <script src="lib/TrackballControls.js"></script>
     <script src="lib/FirstPersonControls.js"></script>
-    <script src="lib/ObjectControls.js"></script>
+    <script src="lib/TweenLite.min.js"></script>
+    
+
+
     <script src="lib/HeartSprite.js"></script>
 
 
-    <script src="lib/shaders/CopyShader.js"></script>
-    <script src="lib/shaders/DotScreenShader.js"></script>
-    <script src="lib/shaders/RGBShiftShader.js"></script>    
-    
-    <script src="lib/postprocessing/EffectComposer.js"></script>
-    <script src="lib/postprocessing/MaskPass.js"></script>
-    <script src="lib/postprocessing/RenderPass.js"></script>
-    <script src="lib/postprocessing/ShaderPass.js"></script>
     
     <!-- Main Script -->
     <script>
@@ -66,7 +61,7 @@
       coronaMesh, coronaGeometry, coronaTexture;
 
       var spriteA, numSprites;
-      var superSprite = [];
+
       var superCollider = [];
       var map1, map2, gifMat1, gifMat2;
 
@@ -87,7 +82,9 @@
 
       //Raycaster
       var raycaster, mouse, INTERSECTED, SELECTED;
-      var sceneSprites;
+      var sceneSprites = [];
+      var spriteArray = [];
+
 
       // If you're using functions to encapsulate functionality do the following:
       // 1. Include the functons between init() and animate()
@@ -165,7 +162,7 @@
         // gifMat2 = new THREE.SpriteMaterial( { map: map2, color: 0xffffff, fog: true } );
 
         var colGeometry = new THREE.PlaneGeometry( 2, 2, 32 );
-        var colMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, visible: false} );
+        var colMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, visible: true} );
         sceneSprites = [];
         for (var i = 0; i < numSprites; i++) {
 
@@ -175,24 +172,26 @@
           position.y = (camera.position.y + Math.random()*50 - 25);
           position.z = (camera.position.z + Math.random()*50 - 50);
 
-          var type = Math.floor(Math.random()*6);
+          var type = Math.floor(Math.random()*3);
 
           var superSprite = new HeartSprite(position, type);
           var affectSun = Math.round(Math.random()) == 1 ? true : false;
           superSprite.changeSun = affectSun;
 
           sceneSprites[i] = superSprite;
-          superSprite.init();
 
+          superSprite.init();
+          spriteArray[i] = superSprite.sprite;
           
-          superCollider[i] = new THREE.Mesh( colGeometry, colMaterial );
+
+
           //superCollider[i].rotation.y = Math.PI/2;
 
           superSprite.sprite.add(superCollider[i]);
 
 
           scene.add(superSprite.sprite);
-          console.log(superSprite.sprite.scale.x);
+
 
         }
 
@@ -315,10 +314,10 @@
       //   and direction into the scene (camera direction)
       
         raycaster.setFromCamera( mouse, camera );
-        var intersects = raycaster.intersectObjects( superCollider );
+        var intersects = raycaster.intersectObjects( spriteArray );
         if ( intersects.length > 0 ) {
-          if ( INTERSECTED != intersects[ 0 ].object.parent.myParent && SELECTED == null) {
-            INTERSECTED = intersects[ 0 ].object.parent.myParent;
+          if ( INTERSECTED != intersects[ 0 ].object.myParent && SELECTED == null) {
+            INTERSECTED = intersects[ 0 ].object.myParent;
             INTERSECTED.HOVER = true;
 
             //INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
@@ -365,16 +364,16 @@
 
         event.preventDefault();
         raycaster.setFromCamera( mouse, camera );
-        var intersects = raycaster.intersectObjects( superCollider );
+        var intersects = raycaster.intersectObjects( spriteArray );
         if ( intersects.length > 0 ) {
           //controls.enabled = false;
-          SELECTED = intersects[ 0 ].object.parent.myParent;
-          SELECTED.CLICKED = true
-          if (SELECTED.changeSun) {
-            sunChanging = true;
+          SELECTED = intersects[ 0 ].object.myParent;
+          if (SELECTED.cooldownTimer <= 0.0 ) { 
+            SELECTED.CLICKED = true;
+            if (SELECTED.changeSun) {
+              sunChanging = true;
+            }
           }
-
-
         }
       }
 
