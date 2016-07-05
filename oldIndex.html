@@ -18,13 +18,17 @@
     <script src="lib/AudioTexture.js"></script>
     <script src="lib/TrackballControls.js"></script>
     <script src="lib/FirstPersonControls.js"></script>
-    <script src="lib/TweenLite.min.js"></script>
+    <script src="lib/ObjectControls.js"></script>
+
+
+    <script src="lib/shaders/CopyShader.js"></script>
+    <script src="lib/shaders/DotScreenShader.js"></script>
+    <script src="lib/shaders/RGBShiftShader.js"></script>    
     
-
-
-    <script src="lib/HeartSprite.js"></script>
-
-
+    <script src="lib/postprocessing/EffectComposer.js"></script>
+    <script src="lib/postprocessing/MaskPass.js"></script>
+    <script src="lib/postprocessing/RenderPass.js"></script>
+    <script src="lib/postprocessing/ShaderPass.js"></script>
     
     <!-- Main Script -->
     <script>
@@ -57,11 +61,11 @@
 
       // Scene-Specific Variables
       var floor, floorGeometry, floorTexture, 
-      sunMesh, sunGeometry, sunTexture, sunChanging,
+      sunMesh, sunGeometry, sunTexture,
       coronaMesh, coronaGeometry, coronaTexture;
 
       var spriteA, numSprites;
-
+      var superSprite = [];
       var superCollider = [];
       var map1, map2, gifMat1, gifMat2;
 
@@ -82,9 +86,7 @@
 
       //Raycaster
       var raycaster, mouse, INTERSECTED, SELECTED;
-      var sceneSprites = [];
-      var spriteArray = [];
-
+      var sceneSprites;
 
       // If you're using functions to encapsulate functionality do the following:
       // 1. Include the functons between init() and animate()
@@ -130,8 +132,6 @@
         floor.rotateOnAxis(new THREE.Vector3(1,0,0), - Math.PI / 2 );
         scene.add(floor);
 
-        // Here comes the sun little darling //
-        sunChanging = false
         sunGeometry = new THREE.SphereGeometry(100, 32, 32);
         sunMaterial = new THREE.MeshPhongMaterial ({
           color: 0xF3D847,
@@ -154,59 +154,48 @@
         numSprites = 50;
         var textureLoader = new THREE.TextureLoader();
         map1 = textureLoader.load("Texture2.png");
-        // map2 = textureLoader.load("HoverTexture.png");
-        // // for Lazy Heart - duration = 468/num frames
-        // spriteA = new TextureAnimator( map1, 8, 1, 8, 78 ); // texture, #horiz, #vert, #total, duration.
-        // gifMat1 = new THREE.SpriteMaterial( { map: map1, color: 0xffffff, fog: true } );
-        // hoverSprite = new TextureAnimator( map2, 6, 1, 6, 78 ); // texture, #horiz, #vert, #total, duration.
-        // gifMat2 = new THREE.SpriteMaterial( { map: map2, color: 0xffffff, fog: true } );
+        map2 = textureLoader.load("HoverTexture.png");
+        // for Lazy Heart - duration = 468/num frames
+        spriteA = new TextureAnimator( map1, 8, 1, 8, 78 ); // texture, #horiz, #vert, #total, duration.
+        gifMat1 = new THREE.SpriteMaterial( { map: map1, color: 0xffffff, fog: true } );
+        hoverSprite = new TextureAnimator( map2, 6, 1, 6, 78 ); // texture, #horiz, #vert, #total, duration.
+        gifMat2 = new THREE.SpriteMaterial( { map: map2, color: 0xffffff, fog: true } );
 
         var colGeometry = new THREE.PlaneGeometry( 2, 2, 32 );
-        var colMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, visible: true} );
-        sceneSprites = [];
+        var colMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, visible: false} );
+        sceneSprites = new THREE.Object3D;
         for (var i = 0; i < numSprites; i++) {
 
+          var gifMat = new THREE.SpriteMaterial( { map: map1, color: 0xffffff, fog: true } );
+
+          var superSprite= new THREE.Sprite(gifMat);
           
-          var position = new THREE.Vector3();
-          position.x = (camera.position.x + Math.random()*50 - 25);
-          position.y = (camera.position.y + Math.random()*50 - 25);
-          position.z = (camera.position.z + Math.random()*50 - 50);
+          superSprite.position.x = (camera.position.x + Math.random()*25 - 25);
+          superSprite.position.y = (camera.position.y + Math.random()*25 - 25);
+          superSprite.position.z = (camera.position.z + Math.random()*25 - 25);
 
-          var type = Math.floor(Math.random()*3);
 
-          var superSprite = new HeartSprite(position, type);
-          var affectSun = Math.round(Math.random()) == 1 ? true : false;
-          superSprite.changeSun = affectSun;
 
-          sceneSprites[i] = superSprite;
-
-          superSprite.init();
-          spriteArray[i] = superSprite.sprite;
           
+          superCollider[i] = new THREE.Mesh( colGeometry, colMaterial );
+          superSprite.add(superCollider[i]);
 
-
-          //superCollider[i].rotation.y = Math.PI/2;
-
-          superSprite.sprite.add(superCollider[i]);
-
-
-          scene.add(superSprite.sprite);
+          sceneSprites.add(superSprite);
 
 
         }
 
+        scene.add(sceneSprites)
+
+
         
-
-        //objControls.add(superCollider);
-
 
         
   
 
-        //scene.add( sunMesh );
         cameraDummy.add(sunMesh);
         sunMesh.position.set(0, 600, -1000);
-        //console.log(sunMesh.position);
+
 
         
         // If you will not use functions to create the light sources, then put them below
@@ -250,19 +239,10 @@
         // animate() can also handle specific animation steps or they can be handled to an external function
         var delta = clock.getDelta();
         //controls.update(delta);
-        for (var i = 0; i < numSprites; i ++) {
-          sceneSprites[i].update(delta);
-        }
 
-        if (mouse.x >= 0.8) {
-          camera.rotation.y += 0.001;
-        }
 
-        if (mouse.x <= -0.8) {
-          camera.rotation.y -= 0.001;
-        }
-
-        /// A u d i o R e a c t i v i t y ///
+        spriteA.update(delta * 1000);
+        hoverSprite.update(delta * 1000);
 
         audioController.update();
 
@@ -275,23 +255,16 @@
           coronaGeometry.vertices[i + coronaGeometry.vertices.length/2].z += (audioController.analyzer.array[i]-coronaGeometry.vertices[i].z)*floorSmoothing;
         }
 
+
+
         coronaMesh.geometry.verticesNeedUpdate = true;
         floor.geometry.verticesNeedUpdate = true;
-        //
 
-        // sun sun sun changing //
-        if (sunChanging) {
-          changeSunColor();
-          sunChanging = false;
-        }
 
-        //cameraDummy.rotation.y += 0.01;
-        //cameraDummy.rotation.y += 0.1;
 
         for (var i = 0; i < numSprites; i++) {
-          //superCollider[i].lookAt(camera.position);
+          sceneSprites.children[i].lookAt(camera.position);
         }
-
 
 
         requestAnimationFrame( animate );
@@ -313,32 +286,27 @@
       // create a Ray with origin at the mouse position
       //   and direction into the scene (camera direction)
       
-        raycaster.setFromCamera( mouse, camera );
-        var intersects = raycaster.intersectObjects( spriteArray );
-        if ( intersects.length > 0 ) {
-          if ( INTERSECTED != intersects[ 0 ].object.myParent && SELECTED == null) {
-            INTERSECTED = intersects[ 0 ].object.myParent;
-            INTERSECTED.HOVER = true;
 
-            //INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
-            //INTERSECTED.material.color.setHex( 0xff0000 );
+      /////////This raycasting method is THE WORST//////////// 
+      /////and I can't figure out a better way to do it///////
+
+        raycaster.setFromCamera( mouse, camera );
+        var intersects = raycaster.intersectObjects( superCollider );
+        if ( intersects.length > 0 ) {
+          if ( INTERSECTED != intersects[ 0 ].object.parent && SELECTED == null) {
+            if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+            INTERSECTED = intersects[ 0 ].object.parent;
+
+            INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+            INTERSECTED.material.color.setHex( 0xff0000 );
           }
         } else {
-          if (INTERSECTED != null) { INTERSECTED.HOVER = false }
-          //INTERSECTED.HOVER = false;
+          if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
           INTERSECTED = null;
         }
 
         
-        //  var intersects = raycaster.intersectObjects( superCollider );
 
-        // for ( var i = 0; i < intersects.length; i++ ) {
-
-        //   intersects[ i ].object.material.color.set( 0x000000 );
-          
-        //   console.log("intersect");
-        
-        // } 
         
         renderer.render(scene, camera); 
       }
@@ -355,8 +323,6 @@
       function onDocumentMouseMove( event ) {
         event.preventDefault();
         mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-        
-        
         mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
       }
 
@@ -364,72 +330,57 @@
 
         event.preventDefault();
         raycaster.setFromCamera( mouse, camera );
-        var intersects = raycaster.intersectObjects( spriteArray );
+        var intersects = raycaster.intersectObjects( superCollider );
         if ( intersects.length > 0 ) {
           //controls.enabled = false;
-          SELECTED = intersects[ 0 ].object.myParent;
-          if (SELECTED.cooldownTimer <= 0.0 ) { 
-            SELECTED.CLICKED = true;
-            if (SELECTED.changeSun) {
-              sunChanging = true;
-            }
-          }
+          SELECTED = intersects[ 0 ].object.parent;
+          SELECTED.material.color.setHex(0x0000ff);
         }
       }
 
       function onDocumentMouseUp(event) {
-        SELECTED.CLICKED = false;
+        SELECTED.material.color.setHex(0xffffff);
         SELECTED = null;
       }
 
-      function changeSunColor() {
-        
-        
-        sunMesh.material.emissive.r = Math.random();
-        sunMesh.material.emissive.g = Math.random();
- 
-
-
-      }
-
       
       
 
-      // function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) { 
-      //   // note: texture passed by reference, will be updated by the update function.
+      function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) { 
+        // note: texture passed by reference, will be updated by the update function.
           
-      //   this.tilesHorizontal = tilesHoriz;
-      //   this.tilesVertical = tilesVert;
-      //   // how many images does this spritesheet contain?
-      //   //  usually equals tilesHoriz * tilesVert, but not necessarily,
-      //   //  if there at blank tiles at the bottom of the spritesheet. 
-      //   this.numberOfTiles = numTiles;
-      //   texture.wrapS = texture.wrapT = THREE.RepeatWrapping; 
-      //   texture.repeat.set( 1 / this.tilesHorizontal, 1 / this.tilesVertical );
+        this.tilesHorizontal = tilesHoriz;
+        this.tilesVertical = tilesVert;
+        // how many images does this spritesheet contain?
+        //  usually equals tilesHoriz * tilesVert, but not necessarily,
+        //  if there at blank tiles at the bottom of the spritesheet. 
+        this.numberOfTiles = numTiles;
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping; 
+        texture.repeat.set( 1 / this.tilesHorizontal, 1 / this.tilesVertical );
 
-      //   // how long should each image be displayed?
-      //   this.tileDisplayDuration = tileDispDuration;
+        // how long should each image be displayed?
+        this.tileDisplayDuration = tileDispDuration;
 
-      //   // how long has the current image been displayed?
-      //   this.currentDisplayTime = 0;
+        // how long has the current image been displayed?
+        this.currentDisplayTime = 0;
 
-      //   // which image is currently being displayed?
-      //   this.currentTile = 0;
+        // which image is currently being displayed?
+        this.currentTile = 0;
           
-      //   this.update = function( milliSec ) {
-      //     this.currentDisplayTime += milliSec;
-      //     while (this.currentDisplayTime > this.tileDisplayDuration) {
-      //       this.currentDisplayTime -= this.tileDisplayDuration;
-      //       this.currentTile++;
-      //       if (this.currentTile == this.numberOfTiles)
-      //         this.currentTile = 0;
-      //       var currentColumn = this.currentTile % this.tilesHorizontal;
-      //       texture.offset.x = currentColumn / this.tilesHorizontal;
-      //       var currentRow = Math.floor( this.currentTile / this.tilesHorizontal );
-      //       texture.offset.y = currentRow / this.tilesVertical;
-      //     }
-      //   };
-      // }  
+        this.update = function( milliSec ) {
+          this.currentDisplayTime += milliSec;
+          while (this.currentDisplayTime > this.tileDisplayDuration) {
+            this.currentDisplayTime -= this.tileDisplayDuration;
+            this.currentTile++;
+            if (this.currentTile == this.numberOfTiles)
+              this.currentTile = 0;
+            var currentColumn = this.currentTile % this.tilesHorizontal;
+            texture.offset.x = currentColumn / this.tilesHorizontal;
+            var currentRow = Math.floor( this.currentTile / this.tilesHorizontal );
+            texture.offset.y = currentRow / this.tilesVertical;
+          }
+        };
+      }  
     </script>
   </body>
 </html>
