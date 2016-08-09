@@ -76,6 +76,7 @@
       uniform float uKd;
       uniform float uBorder;
 
+
       varying vec3 vNormal;
       varying vec3 vViewPosition;
 
@@ -92,9 +93,9 @@
         float diffuse = max( dot( normal, lVector ), 0.0);
         if (diffuse > uBorder) {
             diffuse = 1.0;
-        } else if (diffuse > (uBorder / 2.0)) {
-            diffuse = 0.7;
-        } else diffuse = 0.5;
+        } else if (diffuse > (uBorder / 4.0)) {
+            diffuse = 0.8;
+        } else diffuse = 0.6;
 
         gl_FragColor = vec4( uKd * uMaterialColor * uDirLightColor * diffuse, 1.0 );
       }
@@ -245,10 +246,10 @@
           wireframe: true,
         });
         coronaMesh = new THREE.Mesh( coronaGeometry, coronaMaterial);
-        for (var i = 0; i < coronaGeometry.vertices.length; i++) {
-          coronaVertPos[i] = new THREE.Vector3() ;
-          coronaVertPos[i].copy(coronaGeometry.vertices[i]);
-        }
+        // for (var i = 0; i < coronaGeometry.vertices.length; i++) {
+        //   coronaVertPos[i] = new THREE.Vector3() ;
+        //   coronaVertPos[i].copy(coronaGeometry.vertices[i]);
+        // }
         
         
 
@@ -261,8 +262,7 @@
         // hoverSprite = new TextureAnimator( map2, 6, 1, 6, 78 ); // texture, #horiz, #vert, #total, duration.
         // gifMat2 = new THREE.SpriteMaterial( { map: map2, color: 0xffffff, fog: true } );
 
-        var colGeometry = new THREE.PlaneGeometry( 2, 2, 32 );
-        var colMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, visible: true} );
+
         sceneSprites = [];
         for (var i = 0; i < numSprites; i++) {
 
@@ -319,8 +319,10 @@
           },
           uBorder: {
             type: "f",
-            value: 0.5
+            value: 0.2
           }
+
+
         }
 
 
@@ -389,49 +391,21 @@
 
        
 
-        coronaMesh.rotation.z += 0.01;
+        coronaMesh.rotation.z += 0.02;
+
+        sunMesh.rotation.z -= 0.01;
+
 
         /// A u d i o R e a c t i v i t y ///
 
         audioController.update();
 
+        SunExpand();
+
         for (var i = 0; i < audioController.analyzer.array.length; i++) {
           floorGeometry.vertices[i].z += (audioController.analyzer.array[i]*10-floorGeometry.vertices[i].z)*floorSmoothing;
         }
 
-        for (var i = 0; i < coronaGeometry.vertices.length; i++) {
-          
-
-          var currentPos = new THREE.Vector3(coronaGeometry.vertices[i].x, coronaGeometry.vertices[i].y, coronaGeometry.vertices[i].z);
-          //console.log(currentPos);
-          var meshPosition = new THREE.Vector3();
-          meshPosition.copy(coronaMesh.position);
-          //console.log(meshPosition);
-         
-          var destVector = new THREE.Vector3()
-          destVector.subVectors(currentPos, meshPosition);
-          destVector.normalize();
-          //console.log()
-          var audioExpansion = i % 2 == 0 ? audioController.analyzer.array[10] * 2 : audioController.analyzer.array[25] * 2;
-          //var contractionForce = 
-         
-          //console.log(audioExpansion);
-          destVector.multiplyScalar(audioExpansion);
-
-          if (audioExpansion > 0) {
-            destVector.x -= currentPos.x;
-            destVector.y -= currentPos.y;
-            destVector.z -= currentPos.z;
-          }
-
-          destVector.multiplyScalar(0.1);
-       
-
-          coronaGeometry.vertices[i].add(destVector);
-          //coronaGeometry.vertices[i + coronaGeometry.vertices.length/2].add(destVector);
-        }
-
-        coronaMesh.geometry.verticesNeedUpdate = true;
         floor.geometry.verticesNeedUpdate = true;
 
         // sun sun sun changing //
@@ -515,7 +489,6 @@
         mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
         mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
-        console.log( mouse.x );
       }
 
       function onDocumentMouseDown(event) {
@@ -543,21 +516,102 @@
         SELECTED = null;
       }
 
+      function SunExpand() {
+
+        for (var i = 0; i < coronaGeometry.vertices.length; i++) {
+          
+
+          var currentPos = new THREE.Vector3(coronaGeometry.vertices[i].x, coronaGeometry.vertices[i].y, coronaGeometry.vertices[i].z);
+          //console.log(currentPos);
+          var meshPosition = new THREE.Vector3();
+          meshPosition.copy(coronaMesh.position);
+          //console.log(meshPosition);
+         
+          var destVector = new THREE.Vector3();
+          destVector.subVectors(currentPos, meshPosition);
+          destVector.normalize();
+          //console.log()
+          var audioExpansion = i % 2 == 0 ? audioController.analyzer.array[10] * 2 : audioController.analyzer.array[25] * 2;
+          //var contractionForce = 
+         
+          //console.log(audioExpansion);
+          destVector.multiplyScalar(audioExpansion);
+
+          if (audioExpansion > 0) {
+            destVector.x -= currentPos.x;
+            destVector.y -= currentPos.y;
+            destVector.z -= currentPos.z;
+          }
+
+          destVector.multiplyScalar(0.1);
+       
+
+          coronaGeometry.vertices[i].add(destVector);
+          //coronaGeometry.vertices[i + coronaGeometry.vertices.length/2].add(destVector);
+        }
+
+        coronaMesh.geometry.verticesNeedUpdate = true;
+
+        for (var i = 0; i < sunGeometry.vertices.length; i++) {
+          
+
+          var currentPos = new THREE.Vector3(sunGeometry.vertices[i].x, sunGeometry.vertices[i].y, sunGeometry.vertices[i].z);
+          //console.log(currentPos);
+          var meshPosition = new THREE.Vector3();
+          meshPosition.set(0,0,0);
+          //console.log(meshPosition);
+         
+          var destVector = new THREE.Vector3();
+          destVector.subVectors(currentPos, meshPosition);
+          destVector.normalize();
+          //console.log()
+          var audioExpansion = i % 2 == 0 ? audioController.analyzer.array[15] : audioController.analyzer.array[45] ;
+          //var contractionForce = 
+         
+          //console.log(audioExpansion);
+          destVector.multiplyScalar(audioExpansion);
+
+          //console.log(destVector);
+
+          if (audioExpansion > 0) {
+            destVector.x -= currentPos.x;
+            destVector.y -= currentPos.y;
+            destVector.z -= currentPos.z;
+          }
+
+          destVector.multiplyScalar(0.1);
+       
+
+          sunGeometry.vertices[i].add(destVector);
+          //coronaGeometry.vertices[i + coronaGeometry.vertices.length/2].add(destVector);
+        }
+
+        sunMesh.geometry.verticesNeedUpdate = true;
+
+      }
+
       function changeSunColor() {
         
-        var materialR = Math.random();
-        var materialG = Math.random();
-        var materialB = Math.random();
+        var materialR = 0.75 + (Math.random()/4);
+        var materialG = 0.75 + (Math.random()/4);
+        var materialB = 0.5 + (Math.random()/2);
+
+        var newUBorder = Math.random();
+        var newLineWeight = Math.random() * 10.0;
         
         TweenLite.to(sunMaterial.uniforms.uMaterialColor.value, 3.0, {r: materialR, g: materialG, b: materialB });
+        TweenLite.to(sunMaterial.uniforms.uBorder, 3.0, {value: newUBorder} );
+        TweenLite.to(coronaMaterial.emissive, 3.0, {r: materialR, g: materialG, b: materialB });
+        TweenLite.to(coronaMaterial, 3.0, { wireframeLinewidth: newLineWeight });
         //sunMaterial.uniforms.uMaterialColor.value.copy(materialColor);
 
       }
 
       function shiftLandscape () {
-        console.log("changing landscape")
-        var newRot = floorPivot.rotation.x + (Math.PI * Math.random()/2);
-        var newSun = Math.sin(newRot) * 600;
+        console.log("changing landscape");
+        var newAngle = Math.PI * Math.random()/2
+        var newRot = floorPivot.rotation.x + newAngle;
+        var newSun = Math.sin(newAngle) * 600 + 200; 
         TweenLite.to(floorPivot.rotation, 4.0, {x: newRot});
         TweenLite.to(sunMesh.position, 4.0, {y: newSun});
 
