@@ -1,26 +1,57 @@
 <html>
   <head>
-    <title>Three.js Example Template</title>
+    <title>Laughing all the Time</title>
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link href="loadingbar.css" rel="stylesheet" />
+    <style>
+      a:link {
+          color: #36C4D8;
+          background-color: transparent;
+          text-decoration: none;
+      }
+
+      a:hover {
+          color: #F3D847;
+          background-color: transparent;
+
+      }
+      a:active {
+          color: #B16FAD;
+          background-color: transparent;
+
+      }
+</style>
   </head>
   <body>
   <div id = "curtain" >
           <div id="splashText">
-          <par>Welcome<br/><br/></par>
-          <par>Requires A WebGL-compatible Browser</par>
+            <par>Welcome<br/><br/></par>
+            <par style = "font-size:15px">Requires A WebGL-compatible Browser</par>
           </div>
+
           <div id= "start">
             
             <a onclick="begin()"> 
               Lazy Heart<br/><br/>
+              
+              <img src = images/Vintage-GraphicsFairy1.png> <br/><br/>
 
-              <img src = images/Vintage-GraphicsFairy1.png> <br/>
-
-              Start <br/>
+              Laughing all the Time <br/>
+              
             </a>
+          </div>
+
+          <div id = "ending" >
+
+            <h1>Thanks!<br/><br/></h1>
+            <p>
+            <a href = http://8ude.github.io/LazyHeart>Play Again<br/><br/></a>
+            <a href = http://www.lazyheart.net>Back to Lazy Heart<br/><br/></a>
+            <a href = http://www.8ude.com>Animations by Corey B<br/></a>
+            </p>
+       
           </div>
           
           <!-- <div id = "winner">
@@ -32,6 +63,15 @@
           </div>-->
        
   </div>
+  <div id = "bottomLinks">
+
+      <a href = http://www.lazyheart.net>Back to Lazy Heart<br/></a>
+
+      <a href = http://www.8ude.com>Animations by Corey B</a>
+
+  </div>
+  
+
     <!--
       Template for creating synaesthetics
       Load libraries from lib/ and load scene-specifics from js/
@@ -127,6 +167,9 @@
       var composer;
       var cameraDummy;
 
+      var mellowSectionTime = 5.0;
+      var endingTime = 100.0;
+
       renderer = new THREE.WebGLRenderer();
       renderer.setSize( window.innerWidth, window.innerHeight );
       document.body.appendChild( renderer.domElement );
@@ -140,6 +183,7 @@
 
       //time
       var clock = new THREE.Clock();
+      var time;
 
       // Scene-Specific Variables
       var floor, floorGeometry, floorTexture, 
@@ -386,6 +430,7 @@
         // requestAnimationFrame shim is included in Three.js, no need to create your own
         // animate() can also handle specific animation steps or they can be handled to an external function
         var delta = clock.getDelta();
+        time += delta;
 
         controls.update(delta);
         
@@ -426,6 +471,18 @@
 
 
         requestAnimationFrame( animate );
+
+
+        //check if mellow section
+
+        //check if song end
+
+        if (time > endingTime) {
+
+          songEnd();
+
+
+        }
         
         //render from composer OR Renderer NOTBOTH 
         //ToDo - make switch that detects this? 
@@ -446,6 +503,21 @@
         sunMaterial.uniforms.uDirLightPos.value.x = light.position.x;
         sunMaterial.uniforms.uDirLightPos.value.y = light.position.y;
 
+
+        //get darker at the end
+
+        if (time > mellowSectionTime) {
+          var currentAlpha = renderer.getClearAlpha();
+          var subtraction = (time - mellowSectionTime) * 0.0001;
+          var newAlpha = currentAlpha > 0.5 ? currentAlpha - subtraction : 0.5
+
+          renderer.setClearColor( 0xaaccff , newAlpha);
+
+          var currentFog = scene.fog.density;
+          var fogAddition = 0.00001
+          var newDensity = scene.fog.density < 0.01 ? currentFog + fogAddition : 0.01;
+          scene.fog.density = newDensity;
+        }
 
       }
 
@@ -628,6 +700,7 @@
               curtain.fadeOut('slow',function(){
                
                $("#start").css("display","none"); 
+               $("#splashText").css("display","none"); 
                 
               })    
             }
@@ -635,6 +708,20 @@
           controls.enabled = true;
           
           stream.play();
+      }
+
+      function songEnd() {
+        $("#curtain").css("background","#000");
+        $("#curtain").css( "opacity", "0.7");
+            $("#curtain").fadeIn(5000 , function(){
+              
+              $("#ending").css("display", "block");
+              $("#bottomLinks").fadeOut();
+            });
+
+
+        controls.enabled = false
+
       }
       
     </script>

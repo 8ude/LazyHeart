@@ -1,4 +1,6 @@
 
+
+
 #curtain{
       
           width:100%;
@@ -11,12 +13,26 @@
           opacity: 0.80;
 
         }
+#ending{
+
+          color:#36C4D8;
+          font-family:courier;
+          font-size:1em;
+          position:absolute;
+          margin-top:5px;
+          top:40%;
+          width:100%;
+          display: none;
+          text-align:center;
+          transition: color, 0.5s;
+
+}
 
 #splashtext{
 
         color:#B16FAD;
         font-family:courier;
-        font-size:1em;
+        font-size:25px;
         position:absolute;
         margin-top:10px;
         top:10%;
@@ -24,6 +40,8 @@
         text-align:center;
 
         }
+
+
 
 #start{
 
@@ -65,4 +83,17 @@
 }
 #start img:hover {
   max-width: 15%;
+}
+
+#bottomLinks {
+      color:#FFFF00;
+      font-family:courier;
+      font-size:10px;
+      position:absolute;
+      bottom: 20px;
+      right: 20px;
+
+      text-align: right;
+
+
 }
