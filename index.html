@@ -122,6 +122,7 @@
 
       // General three.js variables
       var camera, controls, scene, renderer, projector;
+
       // If using post-processor - send scene to EffectComposer
       var composer;
       var cameraDummy;
@@ -149,7 +150,7 @@
       var coronaVertPos = [];
 
       var spriteA;
-      var numSprites = 25;
+      var numSprites = 20;
 
       var superCollider = [];
       var map1, map2, gifMat1, gifMat2;
@@ -202,7 +203,7 @@
         scene.fog = new THREE.FogExp2( 0xaaccff, 0.0007 );
 
         // Step 2 : Add Camera
-        camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera = new THREE.PerspectiveCamera(120, window.innerWidth / window.innerHeight, 1, 10000 );
         camera.up.set(0,1,0);
         camera.position.y = 600;
 
@@ -210,9 +211,10 @@
         
 
         // Step 2b : Controls
-       // controls = new THREE.FirstPersonControls(camera);
-        //controls.movementSpeed = 10;
-       // controls.lookSpeed = 0.1;
+        controls = new THREE.FirstPersonControls(camera);
+        controls.movementSpeed = 10;
+        controls.lookSpeed = 0.1;
+        controls.enabled = false;
 
         // Step 2c : Raycaster and Mouse
         raycaster = new THREE.Raycaster();
@@ -268,9 +270,9 @@
 
           
           var position = new THREE.Vector3();
-          position.x = (camera.position.x + Math.random()*50 - 25);
-          position.y = (camera.position.y + Math.random()*30 - 15);
-          position.z = (camera.position.z - Math.random()*10 - 10);
+          position.x = (camera.position.x + Math.random()*100 - 50);
+          position.y = (camera.position.y + Math.random()*50 - 15);
+          position.z = (camera.position.z - Math.random()*30 + 10);
 
           var type = Math.floor(Math.random()*3);
 
@@ -301,7 +303,7 @@
 
         // Here comes the sun little darling //
         sunChanging = false;
-        sunGeometry = new THREE.IcosahedronGeometry(100, 2);
+        sunGeometry = new THREE.IcosahedronGeometry(100, 1);
         //sunGeometry = new THREE.SphereGeometry(100, 32, 32);
         var materialColor = new THREE.Color();
         materialColor.setRGB(1.0, 0.8, 0.6);
@@ -384,7 +386,10 @@
         // requestAnimationFrame shim is included in Three.js, no need to create your own
         // animate() can also handle specific animation steps or they can be handled to an external function
         var delta = clock.getDelta();
-        //controls.update(delta);
+
+        controls.update(delta);
+        
+        
         for (var i = 0; i < numSprites; i ++) {
           sceneSprites[i].update(delta);
         }
@@ -627,6 +632,7 @@
               })    
             }
           time = 0;
+          controls.enabled = true;
           
           stream.play();
       }
