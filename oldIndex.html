@@ -112,9 +112,9 @@
         scene.add( cameraDummy );
 
         // Step 2b : Controls
-       // controls = new THREE.FirstPersonControls(camera);
-        //controls.movementSpeed = 10;
-       // controls.lookSpeed = 0.1;
+        controls = new THREE.FirstPersonControls(camera);
+        controls.movementSpeed = 10;
+        controls.lookSpeed = 0.1;
 
         // Step 2c : Raycaster and Mouse
         raycaster = new THREE.Raycaster();
@@ -238,7 +238,7 @@
         // requestAnimationFrame shim is included in Three.js, no need to create your own
         // animate() can also handle specific animation steps or they can be handled to an external function
         var delta = clock.getDelta();
-        //controls.update(delta);
+        controls.update(delta);
 
 
         spriteA.update(delta * 1000);
