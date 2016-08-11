@@ -167,8 +167,8 @@
       var composer;
       var cameraDummy;
 
-      var mellowSectionTime = 5.0;
-      var endingTime = 100.0;
+      var mellowSectionTime = 220.0;
+      var endingTime = 350.0;
 
       renderer = new THREE.WebGLRenderer();
       renderer.setSize( window.innerWidth, window.innerHeight );
@@ -508,13 +508,13 @@
 
         if (time > mellowSectionTime) {
           var currentAlpha = renderer.getClearAlpha();
-          var subtraction = (time - mellowSectionTime) * 0.0001;
+          var subtraction = (time - mellowSectionTime) * 0.00001;
           var newAlpha = currentAlpha > 0.5 ? currentAlpha - subtraction : 0.5
 
           renderer.setClearColor( 0xaaccff , newAlpha);
 
           var currentFog = scene.fog.density;
-          var fogAddition = 0.00001
+          var fogAddition = 0.00001 * (time-mellowSectionTime);
           var newDensity = scene.fog.density < 0.01 ? currentFog + fogAddition : 0.01;
           scene.fog.density = newDensity;
         }
