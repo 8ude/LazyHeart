@@ -4,6 +4,7 @@
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link href=' http://fonts.googleapis.com/css?family=Droid+Sans' rel='stylesheet' type='text/css'>
     <link href="loadingbar.css" rel="stylesheet" />
     <style>
       a:link {
@@ -26,11 +27,7 @@
   </head>
   <body>
   <div id = "curtain" >
-          <div id="splashText">
-            <par>Welcome<br/><br/></par>
-            <par style = "font-size:15px">Requires A WebGL-compatible Browser</par>
-          </div>
-
+        
           <div id= "start">
             
             <a onclick="begin()"> 
@@ -45,10 +42,8 @@
 
           <div id = "ending" >
 
-            <h1>Thanks!<br/><br/></h1>
             <p>
-            <a href = http://8ude.github.io/LazyHeart>Play Again<br/><br/></a>
-            <a href = http://www.lazyheart.net>Back to Lazy Heart<br/><br/></a>
+            <a href = http://www.lazyheart.net>Song by Lazy Heart<br/><br/></a>
             <a href = http://www.8ude.com>Animations by Corey B<br/></a>
             </p>
        
@@ -65,7 +60,7 @@
   </div>
   <div id = "bottomLinks">
 
-      <a href = http://www.lazyheart.net>Back to Lazy Heart<br/></a>
+      <a href = http://www.lazyheart.net>Song by Lazy Heart<br/></a>
 
       <a href = http://www.8ude.com>Animations by Corey B</a>
 
@@ -167,7 +162,21 @@
       var composer;
       var cameraDummy;
 
-      var mellowSectionTime = 220.0;
+      /////////////////////////////////
+      /////////////////////////////////
+      /////////////TIMES///////////////
+      /////////////////////////////////
+      /////////////////////////////////
+
+  
+      var clock = new THREE.Clock();
+      var time;
+
+      var scene2start = 100.0;
+      var scene3start = 173.0;
+      var scene4start = 240.0;
+      var scene5start = 285.0;
+      var endFade = 340.0;
       var endingTime = 350.0;
 
       renderer = new THREE.WebGLRenderer();
@@ -181,15 +190,20 @@
       document.addEventListener( 'mousedown', onDocumentMouseDown, false);
       document.addEventListener( 'mouseup', onDocumentMouseUp, false);
 
-      //time
-      var clock = new THREE.Clock();
-      var time;
-
-      // Scene-Specific Variables
-      var floor, floorGeometry, floorTexture, 
+      
+      //               \\
+      // SCENE OBJECTS \\
+      //               \\ 
+      var floor, floorGeometry, ceiling, ceilingGeometry, ceilingMaterial, floorTexture, 
       sunMesh, sunGeometry, sunTexture, sunChanging,
       landscapeChanging, floorPivot,
       coronaMesh, coronaGeometry, outerCorona, thirdCorona;
+
+      var lazyLightBlue = new THREE.Color(0x36c4d8);
+      var lazyRed = new THREE.Color(0xd63334);
+      var lazyYellow = new THREE.Color(0xf3d847);
+      var lazyLavender = new THREE.Color(0xb16fad);
+      var origFogColor = new THREE.Color(0xaaccff);
 
       var coronaVertPos = [];
 
@@ -200,6 +214,16 @@
       var map1, map2, gifMat1, gifMat2;
 
       var floorSmoothing = 0.1;
+
+      ////////////////////////
+      //using these vars in //
+      //tweens, not the best//
+      //but w/e///////////////
+      ////////////////////////
+
+
+      var backgroundChange = {amt: 0.0};
+      var fogChange = {amt: 0.0};
 
       // Ground Geo Vars
       var worldWidth = 32, worldDepth = 32,
@@ -244,7 +268,7 @@
       function init() {
         // Step 1 : Add Scene
         scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2( 0xaaccff, 0.0007 );
+        scene.fog = new THREE.FogExp2( 0xaaccff, 0.1 );
 
         // Step 2 : Add Camera
         camera = new THREE.PerspectiveCamera(120, window.innerWidth / window.innerHeight, 1, 10000 );
@@ -267,6 +291,18 @@
         // mouse.y = controls.mouseY;
        
 
+        //lights
+        light = new THREE.PointLight( 0xffffff);
+        light.position.set( 0,20,20 );
+
+        light2 = new THREE.PointLight( 0xff00ff );
+        light2.position.set( 0, 200, 50 );
+
+        //light3 = new THREE.AmbientLight( 0x404040 );
+        //light3.position.set(camera.position );
+        scene.add(light);
+        scene.add(light2);
+
 
         // Step 3 : Add stuff
         floorMaterial = new THREE.MeshPhongMaterial( {shading : THREE.FlatShading} );
@@ -280,9 +316,16 @@
         floorPivot.add(floor);
         scene.add(floorPivot);
 
+        ceilingMaterial = new THREE.MeshPhongMaterial( {wireframe: true, wireframeLinewidth: 2.0} );
+        ceilingGeometry = new THREE.PlaneGeometry(10000, 10000, worldWidth, worldDepth);
+        ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+        ceiling.material.transparent = true;
+        ceiling.material.opacity = 0.0;
+        ceiling.position.y += 500;
+        ceiling.rotateOnAxis(new THREE.Vector3(1,0,0), Math.PI / 2 );
+
+        floorPivot.add(ceiling);
         
-
-
 
         coronaGeometry = new THREE.IcosahedronGeometry(200, 1);
         coronaMaterial = new THREE.MeshPhongMaterial ({
@@ -292,6 +335,8 @@
           wireframe: true,
         });
         coronaMesh = new THREE.Mesh( coronaGeometry, coronaMaterial);
+        coronaMesh.material.transparent = true;
+        coronaMesh.material.opacity = 0.01;
         // for (var i = 0; i < coronaGeometry.vertices.length; i++) {
         //   coronaVertPos[i] = new THREE.Vector3() ;
         //   coronaVertPos[i].copy(coronaGeometry.vertices[i]);
@@ -342,8 +387,7 @@
 
         
         // If you will not use functions to create the light sources, then put them below
-        light = new THREE.PointLight( 0xffffff);
-        light.position.set( 0,20,20 );
+        
 
         // Here comes the sun little darling //
         sunChanging = false;
@@ -371,7 +415,7 @@
 
         }
 
-
+        
 
         sunMaterial = new THREE.ShaderMaterial ({
           uniforms: uniforms,
@@ -393,14 +437,6 @@
         scene.add(sunMesh);
 
 
-
-        light2 = new THREE.PointLight( 0xff00ff );
-        light2.position.set( 0, 200, 50 );
-
-        light3 = new THREE.AmbientLight( 0x404040 );
-        light3.position.set(camera.position );
-        scene.add(light);
-        scene.add(light2);
         //scene.add(light3);
         
 
@@ -445,6 +481,10 @@
 
         sunMesh.rotation.z -= 0.01;
 
+        // FOG Fade OUT; Corona Fade In //
+        TweenLite.to(scene.fog, 15, {density: 0.0007});
+        TweenLite.to(coronaMesh.material, 15, {opacity: 1.0})
+
 
         /// A u d i o R e a c t i v i t y ///
 
@@ -454,9 +494,11 @@
 
         for (var i = 0; i < audioController.analyzer.array.length; i++) {
           floorGeometry.vertices[i].z += (audioController.analyzer.array[i]*10-floorGeometry.vertices[i].z)*floorSmoothing;
+          ceilingGeometry.vertices[i].z -= (audioController.analyzer.array[i]*20+ceilingGeometry.vertices[i].z)*(floorSmoothing/4);
         }
 
         floor.geometry.verticesNeedUpdate = true;
+        ceiling.geometry.verticesNeedUpdate = true;
 
         // sun sun sun changing //
         if (sunChanging) {
@@ -477,12 +519,7 @@
 
         //check if song end
 
-        if (time > endingTime) {
 
-          songEnd();
-
-
-        }
         
         //render from composer OR Renderer NOTBOTH 
         //ToDo - make switch that detects this? 
@@ -504,19 +541,30 @@
         sunMaterial.uniforms.uDirLightPos.value.y = light.position.y;
 
 
-        //get darker at the end
+        ///////////////////////////
+        ///////////////////////////
+        ///////Scene Changes///////
+        ///////////////////////////
+        ///////////////////////////
 
-        if (time > mellowSectionTime) {
-          var currentAlpha = renderer.getClearAlpha();
-          var subtraction = (time - mellowSectionTime) * 0.00001;
-          var newAlpha = currentAlpha > 0.5 ? currentAlpha - subtraction : 0.5
 
-          renderer.setClearColor( 0xaaccff , newAlpha);
-
-          var currentFog = scene.fog.density;
-          var fogAddition = 0.00001 * (time-mellowSectionTime);
-          var newDensity = scene.fog.density < 0.01 ? currentFog + fogAddition : 0.01;
-          scene.fog.density = newDensity;
+        if (time > scene2start && time < scene3start) {
+          scene2();
+        }
+        else if (time > scene3start && time < scene4start) {
+          scene3();
+        }
+        else if (time > scene4start && time < scene5start) {
+          scene4();
+        }
+        else if (time > scene5start && time < endFade) {
+          scene5();
+        }
+        else if (time > endFade && time < songEnd) {
+          sceneFade();
+        }
+        else if (time > endingTime) {
+          songEnd();
         }
 
       }
@@ -721,6 +769,63 @@
 
 
         controls.enabled = false
+
+      }
+
+      function scene2() {
+        
+        TweenLite.to(backgroundChange, 20, {amt:1.0});
+
+        var currentColor = new THREE.Color(0xaaccff);
+        var destColor = lazyRed;
+        currentColor.lerp(destColor, backgroundChange.amt);
+        //scene.fog.color.lerp(destColor, backgroundChange.amt);
+        TweenLite.to(scene.fog.color, 10, {r: destColor.r, g:destColor.g, b:destColor.b});
+        
+        renderer.setClearColor(currentColor.getHex());
+
+        TweenLite.to(ceiling.material, 20.0, {opacity: 0.3});
+
+      }
+
+      function scene3() {
+
+        //backgroundChange.amt = 0.0;
+
+        TweenLite.to(backgroundChange, 20, {amt:0.0});
+
+        var currentColor = lazyRed;
+        var destColor = origFogColor;
+        currentColor.lerp(destColor, (1.0 - backgroundChange.amt));
+        //scene.fog.color.lerp(destColor, backgroundChange.amt);
+        scene.fog.color = currentColor;
+        
+        renderer.setClearColor(currentColor.getHex());
+
+        TweenLite.to(ceiling.material, 20.0, {opacity: 0.1});
+
+        //TweenLite.to(light.color, 20.0, {g: 1.0});
+        
+      }
+
+      function scene4() {
+
+      }
+
+      function scene5() {
+        var currentAlpha = renderer.getClearAlpha();
+        var subtraction =  0.00001;
+        var newAlpha = currentAlpha > 0.6 ? currentAlpha - subtraction : 0.6
+
+        renderer.setClearColor( 0xaaccff , newAlpha);
+
+        var currentFog = scene.fog.density;
+        var fogAddition = 0.000001;
+        var newDensity = scene.fog.density < 0.001 ? currentFog + fogAddition : 0.001;
+        scene.fog.density = newDensity;
+
+      }
+      function sceneFade() {
 
       }
       
