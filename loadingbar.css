@@ -17,7 +17,7 @@
 
           color:#36C4D8;
           font-family:"Droid Sans";
-          font-size:1em;
+          font-size:2em;
           position:absolute;
           margin-top:5px;
           top:40%;
@@ -87,7 +87,7 @@
 
 #bottomLinks {
       color:#FFFF00;
-      font-family:courier;
+      font-family:"Droid Sans";
       font-size:10px;
       position:absolute;
       bottom: 20px;
