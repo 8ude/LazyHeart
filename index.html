@@ -186,12 +186,8 @@
 
       var coronaVertPos = [];
 
-      var spriteA;
-      var numSprites = 20;
-      
-
-      var superCollider = [];
-      var map1, map2, gifMat1, gifMat2;
+      //var spriteA;
+      //var numSprites = 20;
 
       var floorSmoothing = 0.1;
       var ceilingSmoothing = 0.1;
@@ -221,8 +217,8 @@
 
       //Raycaster
       var raycaster, mouse, INTERSECTED, SELECTED;
-      var sceneSprites = [];
-      var spriteArray = [];
+      //var sceneSprites = [];
+      //var spriteArray = [];
 
 
       init();
@@ -297,6 +293,7 @@
         coronaMesh.material.transparent = true;
         coronaMesh.material.opacity = 0.01;
 
+        /*
         sceneSprites = [];
         for (var i = 0; i < numSprites; i++) {
 
@@ -326,6 +323,7 @@
 
 
         }
+        */
 
         // Here comes the sun little darling //
         sunChanging = false;
@@ -387,10 +385,11 @@
 
         controls.update(delta);
         
-        
+        /*
         for (var i = 0; i < numSprites; i ++) {
           sceneSprites[i].update(delta);
         }
+        */
 
        
 
@@ -479,7 +478,7 @@
       function render () {
 
 
-
+      /*
         raycaster.setFromCamera( mouse, camera );
         var intersects = raycaster.intersectObjects( spriteArray );
         if ( intersects.length > 0 ) {
@@ -493,6 +492,7 @@
 
           INTERSECTED = null;
         }
+      */
         
         renderer.render(scene, camera); 
 
@@ -518,6 +518,7 @@
       function onDocumentMouseDown(event) {
 
         event.preventDefault();
+        /*
         raycaster.setFromCamera( mouse, camera );
         var intersects = raycaster.intersectObjects( spriteArray );
         if ( intersects.length > 0 ) {
@@ -533,6 +534,7 @@
             }
           }
         }
+        */
       }
 
       function onDocumentMouseUp(event) {
@@ -784,13 +786,15 @@
         TweenLite.to(ceiling.position, 20.0, {y: 400});
         TweenLite.to(ceiling.scale, 40, {x: 5.0, y:5.0});
 
+        /*
         TweenLite.to(spriteOpacity, 60,{value: 0.1, ease:Linear.easeNone});
 
         for (var i = 0; i < numSprites; i ++) {
-          sceneSprites[i].sprite.material.opacity = spriteOpacity.value;
+
           sceneSprites[i].resetOpacity = spriteOpacity.value;
         
         }
+        */
 
       }
       function sceneFade() {
